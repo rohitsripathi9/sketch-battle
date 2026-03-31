@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────── */
+
+@theme {
+  --color-dark-900: #eef2ff;
+  --color-dark-800: #e0e7ff;
+  --color-dark-700: #c7d2fe;
+  --color-dark-600: #a5b4fc;
+  --color-dark-500: #818cf8;
+  --color-dark-400: #6366f1;
+  --color-dark-300: #4f46e5;
+  --color-dark-200: #4338ca;
+  --color-dark-100: #3730a3;
+
+  --color-accent-purple: #8b5cf6;
+  --color-accent-cyan: #22d3ee;
+  --color-accent-pink: #f472b6;
+  --color-accent-green: #34d399;
+  --color-accent-yellow: #facc15;
+  --color-accent-orange: #fb923c;
+  --color-accent-red: #f87171;
+
+  --color-team-red: #ef4444;
+  --color-team-blue: #3b82f6;
+
+  --font-family-sans: 'Lexend', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Base Styles ───────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Animations ────────────────────────────────────────── */
+@keyframes bounce-hover {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.8), 0 0 30px rgba(250, 204, 21, 0.6); }
+}
+
+
+.animate-bounce-hover:hover {
+  animation: bounce-hover 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+
+/* ─── 3D Game Utilities ─────────────────────────────────── */
+.btn-3d {
+  position: relative;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  text-shadow: 0px 2px 0px rgba(0, 0, 0, 0.15);
+  transform: translateY(0);
+}
+
+.btn-3d:active:not(:disabled) {
+  transform: translateY(4px);
+  /* The margin bottom trick is to keep height stable, but transform works fine here */
+}
+
+/* Base glossy and shadow overlay */
+.glossy-overlay {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05));
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.panel-3d {
+  background-color: #ffffff;
+  border: 4px solid var(--color-dark-200);
+  box-shadow: 0 6px 0 var(--color-dark-200), 0 10px 15px -3px rgba(0,0,0,0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+}
+
+.gradient-primary {
+  background: linear-gradient(to bottom, var(--color-accent-yellow), #eab308); /* bright yellow/gold */
+}
+
+.gradient-text {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ─── Background ─────────────────────────────────────────── */
+.bg-radial-glow {
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.3) 0%, transparent 80%);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* ─── Mobile Canvas ────────────────────────────────────── */
+canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ─── Selection ────────────────────────────────────────── */
+::selection {
+  background: rgba(250, 204, 21, 0.5); /* Yellow selection */
+  color: #1e293b;
+}

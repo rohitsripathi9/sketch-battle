@@ -1,0 +1,25 @@
+{
+  "name": "sketchbattle",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/server & npm run dev --workspace=apps/web",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:server": "npm run dev --workspace=apps/server",
+    "build": "npm run db:generate && npm run build --workspace=apps/web",
+    "start": "node apps/server/src/index.js",
+    "db:migrate": "npm run migrate --workspace=packages/db",
+    "db:migrate:deploy": "npm run migrate:deploy --workspace=packages/db",
+    "db:seed": "npm run seed --workspace=packages/db",
+    "db:generate": "npm run generate --workspace=packages/db",
+    "db:studio": "npm run studio --workspace=packages/db",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "setup": "npm install && npm run docker:up && timeout 5 && npm run db:migrate && npm run db:generate && npm run db:seed",
+    "render:build": "npm install && npm run db:migrate:deploy && npm run build"
+  }
+}

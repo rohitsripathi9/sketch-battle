@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: sketchbattle
+    runtime: node
+    plan: free
+    buildCommand: npm run render:build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVER_PORT
+        value: "10000"
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_PRIVATE_KEY
+        sync: false
+      - key: JWT_PUBLIC_KEY
+        sync: false
+      - key: JWT_ACCESS_EXPIRY
+        value: "15m"
+      - key: JWT_REFRESH_EXPIRY
+        value: "7d"
+      - key: WORD_ENCRYPTION_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

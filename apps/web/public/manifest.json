@@ -1,0 +1,17 @@
+{
+  "name": "SketchBattle",
+  "short_name": "SketchBattle",
+  "description": "Real-time multiplayer drawing & guessing game",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

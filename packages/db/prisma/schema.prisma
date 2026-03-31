@@ -1,0 +1,264 @@
+// This is your Prisma schema file
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum RoomMode {
+  matchmaking
+  dual_battle
+  private
+}
+
+enum RoomStatus {
+  waiting
+  in_progress
+  finished
+  abandoned
+}
+
+enum PlayerRole {
+  player
+  spectator
+}
+
+enum Team {
+  red
+  blue
+  none
+}
+
+enum RoundStatus {
+  selecting
+  drawing
+  finished
+  skipped
+}
+
+enum StrokeOpType {
+  draw
+  fill
+  undo
+  clear
+  erase
+}
+
+// ─── USERS ───────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String    @unique @db.Citext
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @map("password_hash") @db.Text
+  avatarS3Key   String?   @map("avatar_s3_key") @db.Text
+  totalScore    BigInt    @default(0) @map("total_score")
+  gamesPlayed   Int       @default(0) @map("games_played")
+  gamesWon      Int       @default(0) @map("games_won")
+  isGuest       Boolean   @default(false) @map("is_guest")
+  isBanned      Boolean   @default(false) @map("is_banned")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  lastSeenAt    DateTime? @map("last_seen_at") @db.Timestamptz()
+
+  // Relations
+  refreshTokens RefreshToken[]
+  ownedWordPacks WordPack[]    @relation("WordPackOwner")
+  hostedRooms   Room[]        @relation("RoomHost")
+  roomPlayers   RoomPlayer[]
+  drawnRounds   Round[]       @relation("RoundDrawer")
+  guesses       Guess[]
+  gameResults   GameResult[]
+
+  @@index([totalScore(sort: Desc)], map: "idx_users_score")
+  @@map("users")
+}
+
+// ─── REFRESH TOKENS ──────────────────────────────────────
+
+model RefreshToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.Text
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  deviceHint String?   @map("device_hint") @db.VarChar(64)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ─── WORD PACKS ──────────────────────────────────────────
+
+model WordPack {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(64)
+  ownerUserId String?  @map("owner_user_id") @db.Uuid
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  owner User?  @relation("WordPackOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  words Word[]
+  rooms Room[]
+
+  @@map("word_packs")
+}
+
+// ─── WORDS ───────────────────────────────────────────────
+
+model Word {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  packId       String     @map("pack_id") @db.Uuid
+  word         String     @db.Text
+  difficulty   Difficulty @default(medium)
+  timesUsed    Int        @default(0) @map("times_used")
+  timesGuessed Int        @default(0) @map("times_guessed")
+
+  pack WordPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@map("words")
+}
+
+// ─── ROOMS ───────────────────────────────────────────────
+
+model Room {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String     @unique @db.VarChar(6)
+  mode            RoomMode
+  hostUserId      String?    @map("host_user_id") @db.Uuid
+  status          RoomStatus @default(waiting)
+  passwordHash    String?    @map("password_hash") @db.Text
+  maxPlayers      Int        @default(8) @map("max_players") @db.SmallInt
+  roundCount      Int        @default(3) @map("round_count") @db.SmallInt
+  drawTimeSecs    Int        @default(80) @map("draw_time_secs") @db.SmallInt
+  wordPackId      String?    @map("word_pack_id") @db.Uuid
+  allowSpectators Boolean    @default(true) @map("allow_spectators")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  startedAt       DateTime?  @map("started_at") @db.Timestamptz()
+  endedAt         DateTime?  @map("ended_at") @db.Timestamptz()
+
+  host        User?       @relation("RoomHost", fields: [hostUserId], references: [id], onDelete: SetNull)
+  wordPack    WordPack?   @relation(fields: [wordPackId], references: [id], onDelete: SetNull)
+  players     RoomPlayer[]
+  rounds      Round[]
+  gameResults GameResult[]
+
+  @@index([code], map: "idx_rooms_code")
+  @@map("rooms")
+}
+
+// ─── ROOM PLAYERS ────────────────────────────────────────
+
+model RoomPlayer {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId      String    @map("room_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  role        PlayerRole @default(player)
+  team        Team       @default(none)
+  seatOrder   Int        @map("seat_order") @db.SmallInt
+  totalScore  Int        @default(0) @map("total_score")
+  isConnected Boolean    @default(true) @map("is_connected")
+  joinedAt    DateTime   @default(now()) @map("joined_at") @db.Timestamptz()
+  leftAt      DateTime?  @map("left_at") @db.Timestamptz()
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([roomId], map: "idx_room_players_room_active")
+  @@map("room_players")
+}
+
+// ─── ROUNDS ──────────────────────────────────────────────
+
+model Round {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId         String      @map("room_id") @db.Uuid
+  roundNumber    Int         @map("round_number") @db.SmallInt
+  drawerUserId   String      @map("drawer_user_id") @db.Uuid
+  team           Team        @default(none)
+  word           String      @db.Text
+  wordDifficulty Difficulty  @default(medium) @map("word_difficulty")
+  status         RoundStatus @default(selecting)
+  startedAt      DateTime?   @map("started_at") @db.Timestamptz()
+  endedAt        DateTime?   @map("ended_at") @db.Timestamptz()
+  replayS3Key    String?     @map("replay_s3_key") @db.Text
+
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  drawer  User     @relation("RoundDrawer", fields: [drawerUserId], references: [id])
+  strokes Stroke[]
+  guesses Guess[]
+
+  @@unique([roomId, roundNumber, team])
+  @@index([roomId, roundNumber], map: "idx_rounds_room")
+  @@map("rounds")
+}
+
+// ─── STROKES ─────────────────────────────────────────────
+
+model Stroke {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roundId   String      @map("round_id") @db.Uuid
+  sequence  Int
+  opType    StrokeOpType @map("op_type")
+  payload   Json        @db.JsonB
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, sequence])
+  @@index([roundId, sequence], map: "idx_strokes_round_seq")
+  @@map("strokes")
+}
+
+// ─── GUESSES ─────────────────────────────────────────────
+
+model Guess {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roundId          String   @map("round_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  team             Team     @default(none)
+  guessText        String   @map("guess_text") @db.Text
+  isCorrect        Boolean  @default(false) @map("is_correct")
+  scoreAwarded     Int      @default(0) @map("score_awarded")
+  guessedAtElapsedMs Int?   @map("guessed_at_elapsed_ms")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roundId], map: "idx_guesses_round")
+  @@map("guesses")
+}
+
+// ─── GAME RESULTS ────────────────────────────────────────
+
+model GameResult {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId     String   @map("room_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  finalRank  Int      @map("final_rank") @db.SmallInt
+  finalScore Int      @map("final_score")
+  scoreDelta Int      @map("score_delta")
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@map("game_results")
+}

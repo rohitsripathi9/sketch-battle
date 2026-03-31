@@ -1,0 +1,51 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.next/
+.turbo/
+packages/db/generated/
+apps/web/dist/
+apps/server/dist/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# Docker
+postgres_data/
+redis_data/
+
+# Keys (use env vars in production)
+keys/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plan / notes
+PLAN.TXT
+
+# Raw asset files at root (already copied into apps/web/public/)
+/*.png
+/*.riv
+/*.mpeg
+/*.mp3
+/*.m4a
+/*.ogg
+/*.wav
+
+# SFX pack source folder
+JDSherbert*/
+
+# Replays runtime data
+replays/
+
+# Scripts (dev-only)
+scripts/
